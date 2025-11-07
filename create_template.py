@@ -275,8 +275,8 @@ def create_customer_monitoring_template(output_path=None):
     # Note: We create example data validations for the first few rows using FIELD_CONFIG
     # Excel requires comma-separated values in formula1, so we convert from semicolon-separated config
     
-    # Extract category names once for efficiency
-    category_names = [cfg[0] for cfg in FIELD_CONFIG]
+    # Create a dictionary for O(1) category lookups
+    category_config_map = {cfg[0]: cfg for cfg in FIELD_CONFIG}
     
     # Map example rows to their categories
     example_row_categories = {
@@ -286,9 +286,9 @@ def create_customer_monitoring_template(output_path=None):
     }
     
     for row_num, category in example_row_categories.items():
-        if category in category_names:
-            # Find the configuration for this category
-            category_cfg = next(cfg for cfg in FIELD_CONFIG if cfg[0] == category)
+        if category in category_config_map:
+            # Get the configuration for this category (O(1) lookup)
+            category_cfg = category_config_map[category]
             
             # Process each field (skip category name at index 0, then pairs of name/options)
             for field_idx in range(1, len(category_cfg), 2):
