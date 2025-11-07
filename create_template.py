@@ -10,6 +10,78 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 
+# Field configuration data for all categories
+# Format: [Category, Field1 Name, Field1 Options, Field2 Name, Field2 Options, ...]
+# Options are separated by semicolons (;) for documentation purposes
+FIELD_CONFIG = [
+    [
+        "Bild-Aufnahme",
+        "Overlap",
+        "60/60;80/80;70/70",
+        "Kamera",
+        "RGB;Multispektral;Thermal",
+        "Auflösung",
+        "20MP;45MP;100MP",
+        "Flughöhe",
+        "50m;100m;120m;150m"
+    ],
+    [
+        "Drohnenshow",
+        "Anzahl Drohnen",
+        "10;25;50;100;200",
+        "Dauer (Min)",
+        "5;10;15;20;30",
+        "Musik",
+        "Ja;Nein",
+        "Indoor/Outdoor",
+        "Indoor;Outdoor;Beides"
+    ],
+    [
+        "3D-Modell erstellen",
+        "Detailgrad",
+        "Niedrig;Mittel;Hoch;Sehr Hoch",
+        "Format",
+        "OBJ;FBX;STL;GLTF",
+        "Texturierung",
+        "Ja;Nein",
+        "Polygonanzahl",
+        "Low Poly;Medium Poly;High Poly"
+    ],
+    [
+        "Video-Produktion",
+        "Auflösung",
+        "1080p;4K;6K;8K",
+        "FPS",
+        "24;30;60;120",
+        "Länge (Min)",
+        "1;3;5;10;15",
+        "Nachbearbeitung",
+        "Basic;Standard;Premium"
+    ],
+    [
+        "Inspektion",
+        "Objekttyp",
+        "Gebäude;Brücke;Windrad;Solaranlage;Sonstiges",
+        "Sensor",
+        "RGB;Thermal;Multispektral",
+        "Berichtstyp",
+        "Standard;Detailliert;Umfassend",
+        "Urgenz",
+        "Normal;Hoch;Sehr Hoch"
+    ],
+    [
+        "Vermessung",
+        "Fläche",
+        "< 1 ha;1-5 ha;5-10 ha;10-50 ha;> 50 ha",
+        "Genauigkeit",
+        "±5cm;±3cm;±2cm;±1cm",
+        "Ausgabeformat",
+        "DXF;SHP;KML;GeoTIFF",
+        "Höhenmodell",
+        "DTM;DSM;Beides"
+    ]
+]
+
 def create_customer_monitoring_template(output_path=None):
     """
     Create the complete Excel template with all sheets and validation
@@ -107,14 +179,8 @@ def create_customer_monitoring_template(output_path=None):
     ws_categories.cell(row=1, column=1).font = config_header_font
     ws_categories.cell(row=1, column=1).alignment = center_alignment
     
-    categories = [
-        "Bild-Aufnahme",
-        "Drohnenshow",
-        "3D-Modell erstellen",
-        "Video-Produktion",
-        "Inspektion",
-        "Vermessung"
-    ]
+    # Extract categories from FIELD_CONFIG (DRY principle)
+    categories = [cfg[0] for cfg in FIELD_CONFIG]
     
     for idx, category in enumerate(categories, start=2):
         cell = ws_categories.cell(row=idx, column=1, value=category)
@@ -146,77 +212,8 @@ def create_customer_monitoring_template(output_path=None):
         cell.alignment = center_alignment
         cell.border = thin_border
     
-    # Field configuration data
-    field_config = [
-        [
-            "Bild-Aufnahme",
-            "Overlap",
-            "60/60;80/80;70/70",
-            "Kamera",
-            "RGB;Multispektral;Thermal",
-            "Auflösung",
-            "20MP;45MP;100MP",
-            "Flughöhe",
-            "50m;100m;120m;150m"
-        ],
-        [
-            "Drohnenshow",
-            "Anzahl Drohnen",
-            "10;25;50;100;200",
-            "Dauer (Min)",
-            "5;10;15;20;30",
-            "Musik",
-            "Ja;Nein",
-            "Indoor/Outdoor",
-            "Indoor;Outdoor;Beides"
-        ],
-        [
-            "3D-Modell erstellen",
-            "Detailgrad",
-            "Niedrig;Mittel;Hoch;Sehr Hoch",
-            "Format",
-            "OBJ;FBX;STL;GLTF",
-            "Texturierung",
-            "Ja;Nein",
-            "Polygonanzahl",
-            "Low Poly;Medium Poly;High Poly"
-        ],
-        [
-            "Video-Produktion",
-            "Auflösung",
-            "1080p;4K;6K;8K",
-            "FPS",
-            "24;30;60;120",
-            "Länge (Min)",
-            "1;3;5;10;15",
-            "Nachbearbeitung",
-            "Basic;Standard;Premium"
-        ],
-        [
-            "Inspektion",
-            "Objekttyp",
-            "Gebäude;Brücke;Windrad;Solaranlage;Sonstiges",
-            "Sensor",
-            "RGB;Thermal;Multispektral",
-            "Berichtstyp",
-            "Standard;Detailliert;Umfassend",
-            "Urgenz",
-            "Normal;Hoch;Sehr Hoch"
-        ],
-        [
-            "Vermessung",
-            "Fläche",
-            "< 1 ha;1-5 ha;5-10 ha;10-50 ha;> 50 ha",
-            "Genauigkeit",
-            "±5cm;±3cm;±2cm;±1cm",
-            "Ausgabeformat",
-            "DXF;SHP;KML;GeoTIFF",
-            "Höhenmodell",
-            "DTM;DSM;Beides"
-        ]
-    ]
-    
-    for row_idx, row_data in enumerate(field_config, start=2):
+    # Use FIELD_CONFIG from module level
+    for row_idx, row_data in enumerate(FIELD_CONFIG, start=2):
         for col_idx, value in enumerate(row_data, start=1):
             cell = ws_field_config.cell(row=row_idx, column=col_idx, value=value)
             cell.border = thin_border
@@ -275,8 +272,11 @@ def create_customer_monitoring_template(output_path=None):
     category_dv.add("D2:D1000")
     
     # Field dropdowns (Columns E-J)
-    # Note: We create example data validations for the first few rows using the field_config data
+    # Note: We create example data validations for the first few rows using FIELD_CONFIG
     # Excel requires comma-separated values in formula1, so we convert from semicolon-separated config
+    
+    # Extract category names once for efficiency
+    category_names = [cfg[0] for cfg in FIELD_CONFIG]
     
     # Map example rows to their categories
     example_row_categories = {
@@ -286,9 +286,9 @@ def create_customer_monitoring_template(output_path=None):
     }
     
     for row_num, category in example_row_categories.items():
-        if category in [cfg[0] for cfg in field_config]:
+        if category in category_names:
             # Find the configuration for this category
-            category_cfg = next(cfg for cfg in field_config if cfg[0] == category)
+            category_cfg = next(cfg for cfg in FIELD_CONFIG if cfg[0] == category)
             
             # Process each field (skip category name at index 0, then pairs of name/options)
             for field_idx in range(1, len(category_cfg), 2):
