@@ -4,14 +4,27 @@ Script to create the Customer Monitoring Platform Excel Template
 Generates an .xlsx file with multiple sheets and data validation rules
 """
 
-import openpyxl
+import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 
-def create_customer_monitoring_template():
-    """Create the complete Excel template with all sheets and validation"""
+def create_customer_monitoring_template(output_path=None):
+    """
+    Create the complete Excel template with all sheets and validation
+    
+    Args:
+        output_path (str, optional): Path where the .xlsx file should be saved.
+                                    If None, saves to current directory.
+    
+    Returns:
+        str: Path to the created file
+    """
+    
+    # Determine output path
+    if output_path is None:
+        output_path = os.path.join(os.getcwd(), "Kundenüberwachung_Vorlage.xlsx")
     
     # Create workbook
     wb = Workbook()
@@ -262,56 +275,44 @@ def create_customer_monitoring_template():
     category_dv.add("D2:D1000")
     
     # Field dropdowns (Columns E-J)
-    # For Bild-Aufnahme category
-    for col_offset, options in enumerate([
-        "60/60,80/80,70/70",  # Field 1 (Overlap)
-        "RGB,Multispektral,Thermal",  # Field 2 (Kamera)
-        "20MP,45MP,100MP",  # Field 3 (Auflösung)
-        "50m,100m,120m,150m",  # Field 4 (Flughöhe)
-    ]):
-        col_letter = get_column_letter(5 + col_offset)  # E, F, G, H
-        field_dv = DataValidation(
-            type="list",
-            formula1=f'"{options}"',
-            allow_blank=True
-        )
-        field_dv.error = "Bitte wählen Sie einen Wert aus der Liste"
-        field_dv.errorTitle = "Ungültige Eingabe"
-        ws_main.add_data_validation(field_dv)
-        # Only add to example rows to avoid conflicts
-        field_dv.add(f"{col_letter}2")
+    # Note: We create example data validations for the first few rows using the field_config data
+    # Excel requires comma-separated values in formula1, so we convert from semicolon-separated config
     
-    # For Drohnenshow category
-    for col_offset, options in enumerate([
-        "10,25,50,100,200",  # Field 1 (Anzahl Drohnen)
-        "5,10,15,20,30",  # Field 2 (Dauer)
-        "Ja,Nein",  # Field 3 (Musik)
-        "Indoor,Outdoor,Beides",  # Field 4
-    ]):
-        col_letter = get_column_letter(5 + col_offset)
-        field_dv = DataValidation(
-            type="list",
-            formula1=f'"{options}"',
-            allow_blank=True
-        )
-        ws_main.add_data_validation(field_dv)
-        field_dv.add(f"{col_letter}3")
+    # Map example rows to their categories
+    example_row_categories = {
+        2: "Bild-Aufnahme",
+        3: "Drohnenshow",
+        4: "3D-Modell erstellen"
+    }
     
-    # For 3D-Modell category
-    for col_offset, options in enumerate([
-        "Niedrig,Mittel,Hoch,Sehr Hoch",  # Field 1 (Detailgrad)
-        "OBJ,FBX,STL,GLTF",  # Field 2 (Format)
-        "Ja,Nein",  # Field 3 (Texturierung)
-        "Low Poly,Medium Poly,High Poly",  # Field 4
-    ]):
-        col_letter = get_column_letter(5 + col_offset)
-        field_dv = DataValidation(
-            type="list",
-            formula1=f'"{options}"',
-            allow_blank=True
-        )
-        ws_main.add_data_validation(field_dv)
-        field_dv.add(f"{col_letter}4")
+    for row_num, category in example_row_categories.items():
+        if category in [cfg[0] for cfg in field_config]:
+            # Find the configuration for this category
+            category_cfg = next(cfg for cfg in field_config if cfg[0] == category)
+            
+            # Process each field (skip category name at index 0, then pairs of name/options)
+            for field_idx in range(1, len(category_cfg), 2):
+                if field_idx + 1 < len(category_cfg):
+                    field_name = category_cfg[field_idx]
+                    field_options = category_cfg[field_idx + 1]
+                    
+                    # Convert semicolon-separated to comma-separated for Excel validation
+                    excel_options = field_options.replace(';', ',')
+                    
+                    # Calculate column (E=5, F=6, G=7, H=8, etc.)
+                    col_offset = (field_idx - 1) // 2
+                    col_letter = get_column_letter(5 + col_offset)
+                    
+                    # Create data validation
+                    field_dv = DataValidation(
+                        type="list",
+                        formula1=f'"{excel_options}"',
+                        allow_blank=True
+                    )
+                    field_dv.error = f"Bitte wählen Sie einen Wert für {field_name} aus der Liste"
+                    field_dv.errorTitle = "Ungültige Eingabe"
+                    ws_main.add_data_validation(field_dv)
+                    field_dv.add(f"{col_letter}{row_num}")
     
     # ========== Add Instructions Sheet ==========
     print("Creating instructions sheet...")
@@ -370,12 +371,11 @@ def create_customer_monitoring_template():
     ws_instructions.merge_cells('A1:C1')
     
     # ========== Save Workbook ==========
-    output_file = "/home/runner/work/staengel/staengel/Kundenüberwachung_Vorlage.xlsx"
-    print(f"Saving workbook to {output_file}...")
-    wb.save(output_file)
-    print(f"✓ Template created successfully: {output_file}")
+    print(f"Saving workbook to {output_path}...")
+    wb.save(output_path)
+    print(f"✓ Template created successfully: {output_path}")
     
-    return output_file
+    return output_path
 
 if __name__ == "__main__":
     print("=" * 60)
